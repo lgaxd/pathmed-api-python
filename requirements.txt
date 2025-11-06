@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+oracledb
+pydantic
+pydantic-settings
+python-jose[cryptography]

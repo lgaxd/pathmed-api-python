@@ -1,0 +1,23 @@
+import os
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+class Settings(BaseSettings):
+    # Configurações da Aplicação
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Configurações do Banco de Dados Oracle
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_DSN: str
+
+    class Config:
+        env_file = ".env"
+
+@lru_cache()
+def get_settings():
+    return Settings()
+
+settings = get_settings()
