@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from datetime import date
 from typing import Optional
 
@@ -25,5 +25,6 @@ class PacienteUpdate(BaseModel):
 # Schema para leitura (retornado pela API)
 class PacienteRead(PacienteBase):
     id_paciente: int
-    
+    email_paciente: Optional[str] = Field(None, alias="email_paciente")
+    telefone_paciente: Optional[str] = Field(None, alias="telefone_paciente")    
     model_config = ConfigDict(from_attributes=True)

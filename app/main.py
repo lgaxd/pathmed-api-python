@@ -1,34 +1,29 @@
+from contextlib import asynccontextmanager 
 from fastapi import FastAPI
-from app.api.v1.api import api_router
-from app.db.database import pool # Importa o pool para fechar no shutdown
-from contextlib import asynccontextmanager
+from app.api.v1.api import api_router 
+# ⭐️ IMPORTAÇÃO CORRETA AGORA ⭐️
+from app.db.database import close_db_pool_on_shutdown 
 
-app = FastAPI(
-    title="PathMed API",
-    description="API RESTful para gerenciamento de consultas e pacientes do sistema PathMed.",
-    version="1.0.0"
-)
-
-# Inclui o roteador da v1
-app.include_router(api_router, prefix="/v1")
-
+# 1. Defina o Context Manager de Lifespan (Ciclo de Vida)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup actions can go here if needed
-    yield
-    # Shutdown actions
-    print("Encerrando aplicação e fechando pool de conexões...")
-    if pool:
-        pool.close()
-    print("Pool de conexões fechado.")
+    # Lógica de Inicialização (Startup) - O yield é a chave
+    print("Application startup: starting process.")
+    
+    yield 
 
+    # Lógica de Desligamento (Shutdown)
+    close_db_pool_on_shutdown()
+    print("Application shutdown: database pool closed.")
+
+
+# 2. Crie a instância do FastAPI usando o lifespan
 app = FastAPI(
     title="PathMed API",
-    description="API RESTful para gerenciamento de consultas e pacientes do sistema PathMed.",
+    description="API RESTful para gerenciamento de consultas médicas.",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan 
 )
 
-@app.get("/", include_in_schema=False)
-def read_root():
-    return {"message": "Bem-vindo à PathMed API. Acesse /v1/docs para a documentação."}
+# 3. Inclua o roteador principal (para resolver o problema 'No operations defined in spec!')
+app.include_router(api_router, prefix="/api/v1")

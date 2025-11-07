@@ -4,22 +4,19 @@ from app.schemas.especialidade import EspecialidadeRead
 from app.crud import crud_especialidade
 from typing import List
 import oracledb
-from app.schemas.msg import Msg
+# A importação de 'Msg' foi removida, pois não é mais necessária neste arquivo.
 
 router = APIRouter()
 
-@router.get("/", response_model=List[EspecialidadeRead])
+@router.get("/", response_model=List[EspecialidadeRead], summary="Lista todas as especialidades médicas")
 def read_especialidades(conn: oracledb.Connection = Depends(get_db_connection)):
     """
     Lista todas as especialidades médicas.
     """
     return crud_especialidade.get_all(conn)
 
-# O endpoint /disponibilidade pode ser complexo e exigir lógica de negócio
-# (cruzar agendas), então o deixaremos como TODO ou uma simples listagem por enquanto.
-@router.get("/disponibilidade", response_model=Msg)
-def check_disponibilidade():
-    """
-    Verifica disponibilidade por especialidade. (NÃO IMPLEMENTADO)
-    """
-    return {"detail": "Endpoint de disponibilidade ainda não implementado."}
+# NOTA IMPORTANTE:
+# O endpoint /disponibilidade foi removido deste arquivo.
+# O roteamento para /especialidades/disponibilidade agora é tratado
+# exclusivamente pelo arquivo 'disponibilidade.py', garantindo que o seu
+# novo fluxo de lógica seja executado.
