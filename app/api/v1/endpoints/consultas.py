@@ -8,7 +8,7 @@ import oracledb
 
 router = APIRouter()
 
-@router.get("/", response_model=List[ConsultaRead])
+@router.get("", response_model=List[ConsultaRead])
 def read_consultas(conn: oracledb.Connection = Depends(get_db_connection)):
     """
     Lista todas as consultas.

@@ -8,7 +8,7 @@ import oracledb
 
 router = APIRouter()
 
-@router.get("/", response_model=List[PacienteRead])
+@router.get("", response_model=List[PacienteRead])
 def read_pacientes(conn: oracledb.Connection = Depends(get_db_connection)):
     """
     Lista todos os pacientes.
