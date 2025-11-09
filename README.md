@@ -7,14 +7,17 @@ Uma API RESTful para gerenciamento de consultas médicas e registros de paciente
 - Python 3.10+
 - FastAPI
 - Oracle Database (via `oracledb`)
-- Pydantic
-- JWT (para autenticação)
 
-## 🚀 Instalação
+### 🔗 Acesso à Aplicação
+**🚀 Demo Online**: https://pathmed-sprint4.vercel.app/
 
-1. Clone o repositório.
-2. Crie e ative um ambiente virtual:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # (Linux/macOS)
-   .\venv\Scripts\activate   # (Windows)
+## 🎥 Demonstração
+
+**📹 Video Demonstrativo**: https://www.youtube.com/watch?v=YZphUeSE4bI
+
+## 👥 Equipe de Desenvolvimento
+
+### 🎯 Product Team
+- **Lucas Grillo Alcântara** (RM 561413)
+- **Augusto Buguas Rodrigues** (RM 563858)
+- **Pietro Abrahamian** (RM 561469)
