@@ -42,15 +42,53 @@ def create_consulta(
     """
     Agenda uma nova consulta.
     """
-    consulta_id = crud_consulta.create(conn, consulta_in)
-    if not consulta_id:
-        raise HTTPException(status_code=500, detail="Erro ao agendar consulta")
-    
-    return ConsultaRead(
-        id_consulta=consulta_id,
-        id_status=1, # Status inicial
-        **consulta_in.model_dump()
-    )
+    try:
+        consulta_id = crud_consulta.create(conn, consulta_in)
+        if not consulta_id:
+            raise HTTPException(status_code=500, detail="Erro ao agendar consulta")
+        
+        return ConsultaRead(
+            id_consulta=consulta_id or 999,  # Placeholder
+            id_status=1,
+            **consulta_in.model_dump()
+        )
+
+    except Exception as e:
+        print(f"❌ Erro detalhado no endpoint: {str(e)}")
+        import traceback
+        print(f"🔍 Stack trace completo: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao agendar consulta: {str(e)}"
+        )
+
+    except oracledb.IntegrityError as e:
+        error_obj, = e.args
+        error_code = error_obj.code
+        if error_code == 1:  # Unique constraint violation
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Já existe uma consulta agendada para este horário"
+            )
+        elif error_code == 2291:  # Foreign key violation
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Paciente ou profissional não encontrado"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Erro de integridade no banco: {error_obj.message}"
+            )
+            
+    except Exception as e:
+        print(f"❌ Erro detalhado no endpoint: {str(e)}")
+        import traceback
+        print(f"🔍 Stack trace completo: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao agendar consulta: {str(e)}"
+        )
 
 @router.put("/status", response_model=Msg)
 def update_consulta_status(

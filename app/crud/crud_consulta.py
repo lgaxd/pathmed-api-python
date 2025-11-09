@@ -2,35 +2,63 @@ import oracledb
 from app.schemas.consulta import ConsultaCreate
 from typing import List, Dict, Any, Optional
 from app.crud.crud_paciente import db_row_to_dict
+from datetime import datetime
 
 def create(conn: oracledb.Connection, consulta: ConsultaCreate) -> Optional[int]:
     """Agenda uma nova consulta."""
     try:
-        new_consulta_id = conn.var(int)
-        
+        print(f"🎯 Tentando criar consulta: paciente={consulta.id_paciente}, profissional={consulta.id_profissional}, data={consulta.data_hora_consulta}")
+
         id_status_inicial = 1  # Status inicial: Agendada
         
         with conn.cursor() as cursor:
+            # Primeiro fazer o INSERT
             cursor.execute("""
                 INSERT INTO TB_PATHMED_TELECONSULTA (
                     ID_PACIENTE, ID_PROFISSIONAL, ID_STATUS, DATA_HORA_CONSULTA
                 ) VALUES (
                     :id_pac, :id_prof, :id_status, :dt_hora
-                ) RETURNING ID_CONSULTA INTO :id
+                )
             """, {
                 "id_pac": consulta.id_paciente,
                 "id_prof": consulta.id_profissional,
                 "id_status": id_status_inicial,
-                "dt_hora": consulta.data_hora_consulta,
-                "id": new_consulta_id
+                "dt_hora": consulta.data_hora_consulta
             })
             
             conn.commit()
-            return new_consulta_id.getvalue()[0]
+            print("✅ INSERT executado com sucesso")
+            
+            # Buscar o ID da consulta recém-criada
+            cursor.execute("""
+                SELECT ID_CONSULTA FROM TB_PATHMED_TELECONSULTA 
+                WHERE ID_PACIENTE = :id_pac 
+                AND ID_PROFISSIONAL = :id_prof 
+                AND DATA_HORA_CONSULTA = :dt_hora
+                AND ID_STATUS = :id_status
+                ORDER BY ID_CONSULTA DESC
+            """, {
+                "id_pac": consulta.id_paciente,
+                "id_prof": consulta.id_profissional, 
+                "dt_hora": consulta.data_hora_consulta,
+                "id_status": id_status_inicial
+            })
+            
+            result = cursor.fetchone()
+            if result:
+                consulta_id = result[0]
+                print(f"✅ Consulta criada com ID: {consulta_id}")
+                return consulta_id
+            else:
+                print("❌ Não foi possível obter o ID da consulta criada")
+                return None
             
     except Exception as e:
         conn.rollback()
-        print(f"Erro ao criar consulta: {e}")
+        print(f"❌ Erro ao criar consulta: {str(e)}")
+        print(f"🔍 Tipo do erro: {type(e)}")
+        import traceback
+        print(f"🔍 Stack trace completo: {traceback.format_exc()}")
         return None
 
 def get_all(conn: oracledb.Connection) -> List[dict]:
