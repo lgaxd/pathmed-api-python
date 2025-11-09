@@ -8,9 +8,7 @@ def create(conn: oracledb.Connection, consulta: ConsultaCreate) -> Optional[int]
     try:
         new_consulta_id = conn.var(int)
         
-        # O ID_STATUS inicial pode ser '1' (Agendada), por exemplo.
-        # Você pode ajustar isso ou receber do schema.
-        id_status_inicial = 1 
+        id_status_inicial = 1  # Status inicial: Agendada
         
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -51,6 +49,40 @@ def get_all(conn: oracledb.Connection) -> List[dict]:
         print(f"Erro ao buscar consultas: {e}")
         return []
 
+def get_by_paciente_id(conn: oracledb.Connection, paciente_id: int) -> List[dict]:
+    """✅ NOVO: Busca consultas por ID do paciente com detalhes expandidos."""
+    consultas = []
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    c.ID_CONSULTA,
+                    c.ID_PACIENTE,
+                    c.ID_PROFISSIONAL, 
+                    c.ID_STATUS,
+                    c.DATA_HORA_CONSULTA,
+                    p.NOME_PACIENTE,
+                    ps.NOME_PROFISSIONAL_SAUDE,
+                    e.DESCRICAO_ESPECIALIDADE,
+                    s.DESCRICAO_STATUS
+                FROM TB_PATHMED_TELECONSULTA c
+                JOIN TB_PATHMED_PACIENTE p ON c.ID_PACIENTE = p.ID_PACIENTE
+                JOIN TB_PATHMED_PROFISSIONAL_SAUDE ps ON c.ID_PROFISSIONAL = ps.ID_PROFISSIONAL
+                JOIN TB_PATHMED_ESPECIALIDADE e ON ps.ID_ESPECIALIDADE = e.ID_ESPECIALIDADE
+                JOIN TB_PATHMED_STATUS_CONSULTA s ON c.ID_STATUS = s.ID_STATUS
+                WHERE c.ID_PACIENTE = :paciente_id
+                ORDER BY c.DATA_HORA_CONSULTA DESC
+            """, paciente_id=paciente_id)
+            
+            for row in cursor:
+                consulta_dict = db_row_to_dict(cursor, row)
+                consultas.append(consulta_dict)
+                
+        return consultas
+    except Exception as e:
+        print(f"Erro ao buscar consultas do paciente {paciente_id}: {e}")
+        return []
+
 def update_status(conn: oracledb.Connection, consulta_id: int, new_status_id: int) -> bool:
     """Atualiza o status de uma consulta."""
     try:
@@ -62,7 +94,7 @@ def update_status(conn: oracledb.Connection, consulta_id: int, new_status_id: in
             """, status=new_status_id, id=consulta_id)
             
             conn.commit()
-            return cursor.rowcount > 0 # Retorna True se alguma linha foi afetada
+            return cursor.rowcount > 0
             
     except Exception as e:
         conn.rollback()
